@@ -32,7 +32,6 @@ terraform.rc
 # Terraform files
 *.tfstate
 *.tfstate.backup
-**/.terraform.lock.hcl
 .terraform/
 
 # Workaround for go test

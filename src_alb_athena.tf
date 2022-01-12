@@ -1,6 +1,12 @@
 
+// Application Load Balancer Table 
+//
+// ALBs emit logs to the following location: 
+// bucket[/prefix]/AWSLogs/aws-account-id/elasticloadbalancing/region/yyyy/mm/dd/aws-account-id_elasticloadbalancing_region_app.load-balancer-id_end-time_ip-address_random-string.log.gz
+//
+// AWS ALB Docs: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+//
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table
-// See Application Load Balancer <> Athena Documentation: https://aws.amazon.com/premiumsupport/knowledge-center/athena-analyze-access-logs/
 resource "aws_glue_catalog_table" "alb_logs_src" {
 
   // Basic
@@ -12,9 +18,10 @@ resource "aws_glue_catalog_table" "alb_logs_src" {
   // Table Properties
   parameters = {
     // General
-    EXTERNAL             = "TRUE"
-    "has_encrypted_data" = "false"
-    "projection.enabled" = "true"
+    EXTERNAL                      = "TRUE"
+    "has_encrypted_data"          = "false"
+    "projection.enabled"          = "true"
+    "partition_filtering.enabled" = "true"
 
     // NOTE ON PARTITION PROJECTION: 
     //
@@ -38,11 +45,17 @@ resource "aws_glue_catalog_table" "alb_logs_src" {
 
     // Partition Projection - Account
     "projection.account_id.type"   = "enum"
-    "projection.account_id.values" = "${data.aws_caller_identity.current.account_id}"
+    "projection.account_id.values" = join(", ", var.organization_account_ids)
 
     // Storage Location
     "storage.location.template" = "${local.src_s3_path}AWSLogs/$${account_id}/elasticloadbalancing/$${region}/$${date}/"
 
+  }
+
+  // Partition Indexes
+  partition_index {
+    index_name = "date_partition_index"
+    keys       = ["date"]
   }
 
   // Partition Columns
