@@ -14,6 +14,14 @@ terraform {
 // Providers
 provider "aws" {
   region = "us-east-1"
+
+  default_tags {
+    tags = {
+      Environment = "Test"
+      Owner       = "terraform"
+      Project     = "Test Service Logs -> Athena (ALB)"
+    }
+  }
 }
 
 // 
@@ -124,7 +132,7 @@ module "svc_logs" {
   src_athena_table_name = "alb_001"
 
   organization_account_ids = [
-      data.aws_caller_identity.current.id
+    data.aws_caller_identity.current.id
   ]
 
 }

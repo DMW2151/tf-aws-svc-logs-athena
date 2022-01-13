@@ -9,7 +9,7 @@
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table
 resource "aws_glue_catalog_table" "alb_logs_src" {
 
-  // Basic
+  // General
   name          = var.src_athena_table_name
   database_name = var.src_athena_db_name
   table_type    = "EXTERNAL_TABLE"
@@ -41,7 +41,7 @@ resource "aws_glue_catalog_table" "alb_logs_src" {
 
     // Partition Projection - Region - All Active Regions
     "projection.region.type"   = "enum"
-    "projection.region.values" = "ap-northeast-1,ap-northeast-2,ap-northeast-3,ap-south-1,ap-southeast-1,ap-southeast-2,ca-central-1,eu-central-1,eu-north-1,eu-west-1,eu-west-2,eu-west-3,sa-east-1,us-east-1,us-east-2,us-west-1,us-west-2"
+    "projection.region.values" = join(", ", var.organization_enabled_regions)
 
     // Partition Projection - Account
     "projection.account_id.type"   = "enum"
@@ -79,7 +79,7 @@ resource "aws_glue_catalog_table" "alb_logs_src" {
 
   storage_descriptor {
 
-    location      = "${local.src_s3_path}AWSLogs/"
+    location      = local.src_s3_path // TODO: CHECK
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 
