@@ -29,8 +29,8 @@ variable "alb_logs_prefix" {
   default     = ""
 
   validation {
-    condition     = var.alb_logs_prefix == "" ? true : regex("/$", var.alb_logs_prefix)
-    error_message = "The src_lb_logs_prefix value must be a valid folder prefix, ending with '/'."
+    condition     = (var.alb_logs_prefix == "") ? true : !(regex("/$", var.alb_logs_prefix) == "")
+    error_message = "The alb_logs_prefix value must be a valid folder prefix, ending with '/'."
   }
 
 }
@@ -41,7 +41,7 @@ variable "vpc_logs_prefix" {
   default     = ""
 
   validation {
-    condition     = var.vpc_logs_prefix == "" ? true : regex("/$", var.vpc_logs_prefix)
+    condition     = (var.vpc_logs_prefix == "") ? true : !(regex("/$", var.vpc_logs_prefix) == "")
     error_message = "The src_lb_logs_prefix value must be a valid folder prefix, ending with '/'."
   }
 
@@ -53,7 +53,7 @@ variable "waf_logs_prefix" {
   default     = ""
 
   validation {
-    condition     = var.waf_logs_prefix == "" ? true : regex("/$", var.waf_logs_prefix)
+    condition     = (var.waf_logs_prefix == "") ? true : !(regex("/$", var.waf_logs_prefix) == "")
     error_message = "The src_lb_logs_prefix value must be a valid folder prefix, ending with '/'."
   }
 

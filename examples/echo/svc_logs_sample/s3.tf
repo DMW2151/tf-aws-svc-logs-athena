@@ -26,6 +26,17 @@ resource "aws_s3_bucket" "svc_logs" {
   }
 }
 
+// Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
+resource "aws_s3_bucket_public_access_block" "block" {
+
+  bucket = aws_s3_bucket.svc_logs.id
+
+  // Block All
+  block_public_acls   = true
+  block_public_policy = true
+
+}
+
 
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy
 resource "aws_s3_bucket_policy" "allow_lb_logging" {

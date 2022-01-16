@@ -19,3 +19,14 @@ resource "aws_s3_bucket" "svc_logs" {
     Name = "tf-athena-svc-logs-${random_pet.random.id}"
   }
 }
+
+// Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block
+resource "aws_s3_bucket_public_access_block" "block" {
+
+  bucket = aws_s3_bucket.svc_logs.id
+
+  // Block All
+  block_public_acls   = true
+  block_public_policy = true
+
+}
