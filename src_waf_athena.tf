@@ -10,19 +10,19 @@
 resource "aws_glue_catalog_table" "waf_logs_src" {
 
   // General
-  name          = var.src_athena_table_waf_name
-  database_name = var.src_athena_db_name
+  name          = var.waf_logs_tbl_name
+  database_name = var.athena_db_name
   table_type    = "EXTERNAL_TABLE"
-  description   = "Web Application Firewall (WAF) logs From ${local.src_s3_path}"
+  description   = "Web Application Firewall (WAF) logs From ${local.waf_src_s3_path}"
 
   // Table Properties
   parameters = {
-    
+
     // General
     EXTERNAL                      = "TRUE"
     "has_encrypted_data"          = "false"
-    "projection.enabled"          = "true"
-    "partition_filtering.enabled" = "true"
+    "projection.enabled"          = tostring(var.enable_projected_partitions)
+    "partition_filtering.enabled" = tostring(var.enable_partition_filtering)
 
     // Partition Projection - Date
     "projection.date.type"   = "date"
@@ -35,10 +35,10 @@ resource "aws_glue_catalog_table" "waf_logs_src" {
 
     // Partition Projection - Accounts in Org
     "projection.account_id.type"   = "enum"
-    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [ data.aws_caller_identity.current.id ])
+    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [data.aws_caller_identity.current.id])
 
     // Storage Location
-    "storage.location.template" = "${local.src_s3_path}AWSLogs/$${account_id}/elasticloadbalancing/$${region}/$${date}/"
+    "storage.location.template" = "${local.waf_src_s3_path}AWSLogs/$${account_id}/elasticloadbalancing/$${region}/$${date}/"
 
   }
 
@@ -69,7 +69,7 @@ resource "aws_glue_catalog_table" "waf_logs_src" {
 
   storage_descriptor {
 
-    location      = local.src_s3_path // TODO: CHECK
+    location      = local.waf_src_s3_path // TODO: CHECK
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 

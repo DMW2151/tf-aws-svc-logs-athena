@@ -22,7 +22,7 @@ resource "aws_kinesis_firehose_delivery_stream" "sink" {
     // Defaulting to `prefix` == `/AWSLogs/.../...` for parity w. VPC and ALB logs
     //
     compression_format = "GZIP" // Other supported values are UNCOMPRESSED, ZIP, Snappy, & HADOOP_SNAPPY. 
-    prefix             = "AWSLogs/${data.aws_caller_identity.current.account_id}/webapplicationfirewall/us-east-1"
+    prefix             = "AWSLogs/${data.aws_caller_identity.current.account_id}/webapplicationfirewall/${data.aws_region.current.id}/"
 
   }
 
@@ -55,7 +55,7 @@ data "aws_iam_policy_document" "kinesis" {
 resource "aws_iam_role" "firehose" {
 
   // General
-  name = "tf-svc-logs-firehose"
+  name_prefix = "tf-svc-logs-firehose"
 
   // Policy - Assume Firehose
   assume_role_policy = jsonencode({

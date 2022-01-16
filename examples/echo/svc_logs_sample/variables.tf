@@ -1,12 +1,14 @@
 variable "vpc_cidr" {
   type        = string
   description = "The IP range to use for the VPC"
-  default     = "10.0.0.0/16"
+  default     = "10.0.0.0/20"
 }
 
+// Defaults to AWS Load Balancer Account ID for US-EAST-1
+// See: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-access-logs.html#attach-bucket-policy
 variable "regional_lb_account_id" {
   type        = string
-  default     = "127311923021" // AWS Load Balancer Account ID for US-EAST-1
+  default     = "127311923021"
   description = "Account ID of the Elastic (or Application) Load Balancer. Refer to AWS load-balancer-access-logs docs."
 }
 
@@ -14,6 +16,11 @@ variable "regional_lb_account_id" {
 variable "build_domain" {
   type        = string
   description = "...."
+}
+
+variable "random" {
+  type        = string
+  description = "..."
 }
 
 // Suggest using an ECS optimized AMI. Doesn't need to be ECS optimuzed, just  
@@ -27,10 +34,14 @@ variable "instance_ami" {
   description = "The AMI..."
 }
 
+
 variable "logging_bucket" {
-  type        = string
   description = "S3 location to sink all logs to"
-  default     = "dmw2151-service-logs"
+  type = object({
+    id     = string
+    arn    = string
+    bucket = string
+  })
 }
 
 variable "instance_size" {

@@ -17,7 +17,7 @@ resource "aws_vpc" "core" {
 resource "aws_flow_log" "logs" {
 
   // General
-  vpc_id               = aws_vpc.core.id
+  vpc_id = aws_vpc.core.id
 
   // Logging Configuration - Log All Traffic to S3
   traffic_type         = "ALL"

@@ -2,7 +2,7 @@
 
 This module takes service logs (e.g. ALB, WAF, VPC Flow) stored in S3 and provisions the corresponding Athena resources to make the logs query-able in Athena. This module will likely be most useful to you as a starting point for your own, more tailored implementation. The `src_${service}_athena.tf` files in this directory each translate the most recent log schema for an AWS service to an AWS Glue catalog table.
 
-Please note, this module does not deploy any load balancers, VPCs, etc, just the Athena and Glue resources to query logs emitted from those services. If you'd like to deploy a test application (including an ALB, VPC, and WAF rules), please refer to [Service Log Sample](./examples/svc_logs_sample/readme.md).
+Please note, this module does not deploy any load balancers, VPCs, etc, just the Athena and Glue resources to query logs emitted from those services. If you'd like to deploy a test application (including an ALB, VPC, and WAF rules), please refer to [Service Log Sample](./examples/readme.md).
 
 Currently, this module currently allows for structured queries on the following AWS service logs. See [AWS Logging Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html) for a complete list of AWS services that sink logs into S3.
 
@@ -14,7 +14,7 @@ Currently, this module currently allows for structured queries on the following 
 
 ## Usage
 
-Examples covering several cases are available in `/examples/**`. In general, they follow a pattern like that shown below.
+Examples covering several cases are available in `/examples/**`. In general, they follow a pattern as shown below.
 
 ```bash
 
@@ -32,7 +32,7 @@ module "svc_logs" {
   athena_db_name = aws_athena_database.logs.name
 
   # Source / Destination Location (ALB)
-  src_logs_bucket = "service_logs_source_bucket"
+  svc_logs_bucket = "service_logs_source_bucket"
 
   # Optional S3 prefix for each supported service
   alb_logs_prefix     = ""

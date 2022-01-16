@@ -30,10 +30,15 @@ resource "aws_instance" "workers" {
   }
 
   // User Data - start-up a `echo` container; see `start_svc.sh` for details
-  user_data            = file("${path.module}/user_data/start_svc.sh")
-  
+  user_data = file("${path.module}/user_data/start_svc.sh")
+
   // Tags
   tags = {
     Name = "tf-svc-logs-worker-instance-${each.value.availability_zone}"
   }
+
+  // Depends on - Ensure that Cloud Init Doesn't Fail !!!
+  depends_on = [
+    aws_nat_gateway.nat
+  ]
 }

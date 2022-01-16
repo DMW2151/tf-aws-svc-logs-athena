@@ -4,17 +4,17 @@
 resource "aws_glue_catalog_table" "vpc_logs_src" {
 
   // General  
-  name          = var.src_athena_table_vpc_name
-  database_name = var.src_athena_db_name
+  name          = var.vpc_logs_tbl_name
+  database_name = var.athena_db_name
   table_type    = "EXTERNAL_TABLE"
-  description   = "VPC Flow logs From ${local.src_s3_path}"
+  description   = "VPC Flow logs From ${local.vpc_src_s3_path}"
 
   parameters = {
     // General
     EXTERNAL                      = "TRUE"
-    "projection.enabled"          = "true"
+    "projection.enabled"          = tostring(var.enable_projected_partitions)
     "has_encrypted_data"          = "false"
-    "partition_filtering.enabled" = "true"
+    "partition_filtering.enabled" = tostring(var.enable_partition_filtering)
 
     // Partition Projection - Region - All Active Regions
     "projection.region.type"   = "enum"
@@ -22,7 +22,7 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
 
     // Partition Projection - Accounts in Org
     "projection.account_id.type"   = "enum"
-    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [ data.aws_caller_identity.current.id ] )
+    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [data.aws_caller_identity.current.id])
   }
 
   // Partition Indexes
@@ -40,7 +40,7 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
 
   storage_descriptor {
 
-    location      = local.src_s3_path // TODO: CHECK
+    location      = local.vpc_src_s3_path // TODO: CHECK
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 

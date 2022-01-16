@@ -11,7 +11,7 @@ resource "aws_wafv2_web_acl" "default" {
 
   // Actions - Always Allow 
   default_action {
-    deny {}
+    allow {}
   }
 
   // Sample rule to block traffic from USA after 100 requests in 5 min.
@@ -66,7 +66,7 @@ resource "aws_wafv2_web_acl_association" "rate_limit_us" {
   //
   // NOTE: The Amazon Resource Name (ARN) of the resource to associate with the web ACL, no need to 
   // have an ALB specific configuration
-  resource_arn = aws_lb.alb.arn 
+  resource_arn = aws_lb.alb.arn
   web_acl_arn  = aws_wafv2_web_acl.default.arn
 }
 

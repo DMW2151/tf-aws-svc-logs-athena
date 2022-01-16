@@ -10,8 +10,8 @@ resource "tls_private_key" "alb" {
 resource "tls_self_signed_cert" "alb" {
 
   // General
-  key_algorithm   = tls_private_key.alb.algorithm
-  private_key_pem = tls_private_key.alb.private_key_pem
+  key_algorithm         = tls_private_key.alb.algorithm
+  private_key_pem       = tls_private_key.alb.private_key_pem
   validity_period_hours = 3 // Certificate expires after 3 hours. self-signed, shouldn't matter either way...
 
   allowed_uses = [
@@ -20,8 +20,9 @@ resource "tls_self_signed_cert" "alb" {
     "server_auth",
   ]
 
+  // TODO: This should be a bit more restrictive; even for a test domain
   dns_names = [
-    "alb-${random_pet.random.id}.${var.build_domain}"
+    "*.${var.build_domain}"
   ]
 
   // ACME options

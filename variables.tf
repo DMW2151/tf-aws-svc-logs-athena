@@ -1,26 +1,101 @@
-// S3 Logs Bucket - Location of logs emitted from AWS services
-variable "src_lb_logs_bucket" {
+// Athena DB Configuration
+
+variable "athena_db_name" {
+  type        = string
+  description = ""
+  default     = "default"
+}
+
+variable "athena_catalog_id" {
+  type        = string
+  description = "Path of the Source ALB logs..."
+  default     = "default"
+}
+
+
+// Source Logs Bucket
+
+variable "svc_logs_bucket" {
   type        = string
   description = "The name of the S3 bucket."
 }
 
-// S3 Source Locations - Location of logs emitted from AWS services; NOTE that ${bucket}/${prefix} 
-// defines the root of the AWS logs, i.e. this is the root directory the AWS logs are located
-//
-// Full Path `${bucket}/${prefix}/AWSLogs/${aws-account-id}/${service-name}/region/yyyy/mm/dd/`
-variable "src_lb_logs_prefix" {
+
+// S3 Source Locations - Location of logs emitted from AWS services
+
+variable "alb_logs_prefix" {
   type        = string
-  description = "The prefix (logical hierarchy) in the bucket. If you don't specify a prefix, assumes the logs are placed at the root level of the bucket."
+  description = "The prefix in the bucket. If you don't specify a prefix, assumes the logs are placed at the root level of the bucket."
   default     = ""
 
   validation {
-    condition     = var.src_lb_logs_prefix == "" ? true : regex("/$", var.src_lb_logs_prefix)
+    condition     = var.alb_logs_prefix == "" ? true : regex("/$", var.alb_logs_prefix)
     error_message = "The src_lb_logs_prefix value must be a valid folder prefix, ending with '/'."
   }
 
 }
 
-// Projected Partitioning Variables
+variable "vpc_logs_prefix" {
+  type        = string
+  description = "The prefix in the bucket. If you don't specify a prefix, assumes the logs are placed at the root level of the bucket."
+  default     = ""
+
+  validation {
+    condition     = var.vpc_logs_prefix == "" ? true : regex("/$", var.vpc_logs_prefix)
+    error_message = "The src_lb_logs_prefix value must be a valid folder prefix, ending with '/'."
+  }
+
+}
+
+variable "waf_logs_prefix" {
+  type        = string
+  description = "The prefix in the bucket. If you don't specify a prefix, assumes the logs are placed at the root level of the bucket."
+  default     = ""
+
+  validation {
+    condition     = var.waf_logs_prefix == "" ? true : regex("/$", var.waf_logs_prefix)
+    error_message = "The src_lb_logs_prefix value must be a valid folder prefix, ending with '/'."
+  }
+
+}
+
+// Athena - Service Logs Table Names
+
+// Service Logs Tables
+variable "alb_logs_tbl_name" {
+  type        = string
+  description = "Athena table name for ALB logs"
+  default     = "alb"
+}
+
+variable "vpc_logs_tbl_name" {
+  type        = string
+  description = "Athena table name for VPC logs"
+  default     = "vpc"
+}
+
+variable "waf_logs_tbl_name" {
+  type        = string
+  description = "Athena table name for WAF Flow logs"
+  default     = "waf"
+}
+
+
+// Athena - Extra Variables - Enable Projected Partitioning
+variable "enable_projected_partitions" {
+  type        = bool
+  description = "Enable Projected Partioning?"
+  default     = true
+}
+
+// Partition Filtering - See: https://aws.amazon.com/about-aws/whats-new/2021/11/amazon-athena-queries-aws-glue-data-catalog-partition-indexes/
+variable "enable_partition_filtering" {
+  type        = bool
+  description = "Enable Projected Partioning?"
+  default     = false
+}
+
+// Athena - Extra Variables - Projected Partitioning
 
 // organization_enabled_regions -> which regions are included in this table?
 variable "organization_enabled_regions" {
@@ -51,39 +126,6 @@ variable "organization_enabled_regions" {
 variable "organization_account_ids" {
   type        = list(string)
   description = "Account IDs to include in this table, these account IDs are included in projected partitioning"
-  default = []
+  default     = []
 }
 
-// Athena Variables
-
-// Athena DB -  
-variable "src_athena_db_name" {
-  type        = string
-  description = "Athena DB for all"
-}
-
-// Glue Catalog
-variable "src_athena_catalog_id" {
-  type        = string
-  description = "Path of the Source ALB logs..."
-  default     = "default"
-}
-
-// Service Logs Tables
-variable "src_athena_table_alb_name" {
-  type        = string
-  description = "Athena table name for ALB logs"
-  default     = "alb"
-}
-
-variable "src_athena_table_waf_name" {
-  type        = string
-  description = "Athena table name for WAF logs"
-  default     = "waf"
-}
-
-variable "src_athena_table_vpc_name" {
-  type        = string
-  description = "Athena table name for VPC Flow logs"
-  default     = "vpcflow"
-}
