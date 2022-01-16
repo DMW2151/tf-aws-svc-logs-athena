@@ -1,10 +1,10 @@
 
-// Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table
 // Note: 
+// Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table
 resource "aws_glue_catalog_table" "vpc_logs_src" {
 
   // General  
-  name          = var.src_athena_table_name
+  name          = var.src_athena_table_vpc_name
   database_name = var.src_athena_db_name
   table_type    = "EXTERNAL_TABLE"
   description   = "VPC Flow logs From ${local.src_s3_path}"
@@ -20,9 +20,15 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
     "projection.region.type"   = "enum"
     "projection.region.values" = join(", ", var.organization_enabled_regions)
 
-    // Partition Projection - Account
+    // Partition Projection - Accounts in Org
     "projection.account_id.type"   = "enum"
-    "projection.account_id.values" = join(", ", var.organization_account_ids)
+    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [ data.aws_caller_identity.current.id ] )
+  }
+
+  // Partition Indexes
+  partition_index {
+    index_name = "date_partition_index"
+    keys       = ["date"]
   }
 
   // Partition Columns
@@ -34,7 +40,7 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
 
   storage_descriptor {
 
-    location      = local.src_vpc_s3_path // TODO: CHECK
+    location      = local.src_s3_path // TODO: CHECK
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 

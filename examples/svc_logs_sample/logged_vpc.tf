@@ -16,9 +16,11 @@ resource "aws_vpc" "core" {
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/flow_log
 resource "aws_flow_log" "logs" {
 
-  // Logging Configuration - Log All Traffic to S3
+  // General
   vpc_id               = aws_vpc.core.id
-  log_destination      = data.aws_s3_bucket.logs_bucket.arn
-  log_destination_type = "s3"
+
+  // Logging Configuration - Log All Traffic to S3
   traffic_type         = "ALL"
+  log_destination      = aws_s3_bucket.svc_logs.arn
+  log_destination_type = "s3"
 }

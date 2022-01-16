@@ -1,70 +1,64 @@
-# AWS Service Logs -> Glue Tables  
+# Querying AWS Service Logs
 
-This module takes service logs (e.g. ALB, NLB, VPC Flow) from S3 and provisions the resources to make the logs query-able in Athena.
+This module takes service logs (e.g. ALB, WAF, VPC Flow) stored in S3 and provisions the corresponding Athena resources to make the logs query-able in Athena. This module will likely be most useful to you as a starting point for your own, more tailored implementation. The `src_${service}_athena.tf` files in this directory each translate the most recent log schema for an AWS service to an AWS Glue catalog table.
 
-## Supported Services
+Please note, this module does not deploy any load balancers, VPCs, etc, just the Athena and Glue resources to query logs emitted from those services. If you'd like to deploy a test application (including an ALB, VPC, and WAF rules), please refer to [Service Log Sample](./examples/svc_logs_sample/readme.md).
 
-Currently, this module currently allows for structured queries on the following AWS service logs. See [AWS Logging Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html) for complete list.
+Currently, this module currently allows for structured queries on the following AWS service logs. See [AWS Logging Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-and-resource-policy.html) for a complete list of AWS services that sink logs into S3.
 
-- [x] Application Load Balancer
+| Service                   | Schema Reference                                                                                                                       | Common Query Reference |
+|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------|----------------------- |
+| Application Load Balancer | [ALB Logs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-log-entry-format) | [ALB Queries](https://docs.aws.amazon.com/athena/latest/ug/application-load-balancer-logs.html)                |
+| VPC Flow                  | [VPC Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html#flow-logs-fields)                                           | [VPC Flow Queries](https://docs.aws.amazon.com/athena/latest/ug/vpc-flow-logs.html)                |
+| Web Application Firewall  | [WAF Logs](https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html)                                                  | [WAF Queries](https://docs.aws.amazon.com/athena/latest/ug/waf-logs.html)               |
 
 ## Usage
 
-See `/examples/${SERVICE_NAME}` for specific usage examples for each supported service.
+Examples covering several cases are available in `/examples/**`. In general, they follow a pattern like that shown below.
 
 ```bash
+
+# Create (or provide) an Athena DB for service logs
+resource "aws_athena_database" "logs" {
+  name   = "logs"
+  bucket = "service_logs_db_query_results"
+}
+
 module "svc_logs" {
+
   source = "../../"
 
   # Athena and Glue Configuration
-  src_athena_db_name    = aws_athena_database.svc_logs.name
-  src_athena_table_name = "alb_001"
+  athena_db_name = aws_athena_database.logs.name
 
   # Source / Destination Location (ALB)
-  src_lb_logs_bucket = data.aws_s3_bucket.svc_logs.bucket
-  src_lb_logs_prefix = ""
-  
+  src_logs_bucket = "service_logs_source_bucket"
+
+  # Optional S3 prefix for each supported service
+  alb_logs_prefix     = ""
+  waf_logs_prefix     = ""
+  vpcflow_logs_prefix = ""
+
+  # Options for Projected Partitioning
+  enable_projected_partitions = true
+
+  organization_account_ids = [
+    data.aws_caller_identity.current.id
+  ]
+
+  organization_enabled_regions = [
+    "us-east-1",
+    "us-west-2",
+    "eu-central-1"
+  ]
+
 }
 ```
 
-<!-- BEGIN_TF_DOCS -->
-## Requirements
+## Note on Projected Partitioning
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 3.70 |
+This module uses a relatively new feature of Athena called [projected partitioning](https://docs.aws.amazon.com/athena/latest/ug/partition-projection.html). You can read more about projected partitioning [here](https://aws.amazon.com/about-aws/whats-new/2020/06/amazon-athena-supports-partition-projection/).
 
-## Providers
+> Partition projection allows you to specify configuration information such as the patterns (for example, YYYY/MM/DD) that are commonly used to form partitions. This gives Athena the information necessary to build partitions without retrieving metadata information from your metadata store. Athena will read the partition values and locations from configuration, rather than from a repository like the AWS Glue Data Catalog. Partition projection reduces the runtime of queries against highly partitioned tables since in-memory operations are often faster than remote operations.
 
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 3.70 |
-
-## Modules
-
-No modules.
-
-## Resources
-
-| Name | Type |
-|------|------|
-| [aws_glue_catalog_table.alb_logs_src](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table) | resource |
-
-## Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_organization_account_ids"></a> [organization\_account\_ids](#input\_organization\_account\_ids) | Associated account IDs -> Used for Projected Partitioning | `list(string)` | n/a | yes |
-| <a name="input_src_athena_catalog_id"></a> [src\_athena\_catalog\_id](#input\_src\_athena\_catalog\_id) | Path of the Source ALB logs... | `string` | `"default"` | no |
-| <a name="input_src_athena_db_name"></a> [src\_athena\_db\_name](#input\_src\_athena\_db\_name) | Athena DB to place Table into... | `string` | n/a | yes |
-| <a name="input_src_athena_table_name"></a> [src\_athena\_table\_name](#input\_src\_athena\_table\_name) | Path of the Source ALB logs... | `string` | n/a | yes |
-| <a name="input_src_lb_logs_bucket"></a> [src\_lb\_logs\_bucket](#input\_src\_lb\_logs\_bucket) | The name of the S3 bucket. | `string` | n/a | yes |
-| <a name="input_src_lb_logs_prefix"></a> [src\_lb\_logs\_prefix](#input\_src\_lb\_logs\_prefix) | The prefix (logical hierarchy) in the bucket. If you don't specify a prefix, assumes the logs are placed at the root level of the bucket. | `string` | `""` | no |
-
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| <a name="output_alb_table"></a> [alb\_table](#output\_alb\_table) | The Catalog table... |
-<!-- END_TF_DOCS -->
+The most significant advantage projected partitioning offers is that is that developers no longer need to configure a Glue crawler, Glue ETL job, or scheduled Athena query to add new partitions to their tables. This is particularly useful for AWS service logs, which are often partitioned hourly. However, Enabling partition projection on a table causes Athena to ignore any partition metadata registered to the table in the AWS Glue Data Catalog or Hive metastore. You can enable or disable projected partitioning on a table with the `${SERVICE}_enable_projected_partitions` option.

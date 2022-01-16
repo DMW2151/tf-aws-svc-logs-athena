@@ -1,4 +1,4 @@
-// Create a Logged Application Load Balancer -> Forwards Traffic to Dummy Service
+// Create an Application Load Balancer -> Forwards Traffic to Dummy Service
 // and sinks logs to S3
 
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb
@@ -15,7 +15,7 @@ resource "aws_lb" "alb" {
 
   // Logging Configuration
   access_logs {
-    bucket  = data.aws_s3_bucket.logs_bucket.id
+    bucket  = aws_s3_bucket.svc_logs.id
     enabled = true
   }
 
@@ -37,7 +37,7 @@ resource "aws_lb" "alb" {
 resource "aws_lb_target_group" "grp" {
 
   // General
-  name        = "tf-svc-logs-grp"
+  name_prefix = "tf-svc"
   target_type = "instance"
   port        = 8080
   protocol    = "HTTP"
@@ -58,33 +58,51 @@ resource "aws_lb_target_group" "grp" {
     unhealthy_threshold = 2
   }
 
+  // Tags
+  tags = {
+    Name = "tf-svc-logs-grp"
+  }
+
+  // TODO: Remove
+  // NOTE: Probably optional here; makes recycling resources easier...
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }
 
-// Explicitly attach individial instances to target group
+// Explicitly attach target instances to target group
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment
-resource "aws_lb_target_group_attachment" "test" {
+resource "aws_lb_target_group_attachment" "alb" {
+
   for_each = aws_instance.workers
 
   // General
   target_id        = each.value.id
   port             = aws_lb_target_group.grp.port
   target_group_arn = aws_lb_target_group.grp.arn
+
 }
 
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener
-resource "aws_lb_listener" "alb_https_listener_rule" {
+resource "aws_lb_listener" "alb_http_listener_rule" {
 
   // General
   load_balancer_arn = aws_lb.alb.arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = "443"
+  protocol          = "HTTPS"
 
-  // Vanilla Forward Action 
+  // SSL Policy
+  ssl_policy      = "ELBSecurityPolicy-2016-08"
+  certificate_arn = aws_acm_certificate.alb.arn
+
+  // Forward traffic to an instance
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.grp.arn
   }
 
+  // Tags
   tags = {
     name = "tf-svc-logs-http-listener"
   }

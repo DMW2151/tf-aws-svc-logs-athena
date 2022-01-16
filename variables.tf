@@ -1,10 +1,13 @@
-// S3 Logs...
+// S3 Logs Bucket - Location of logs emitted from AWS services
 variable "src_lb_logs_bucket" {
   type        = string
   description = "The name of the S3 bucket."
 }
 
-// S3 Logs...
+// S3 Source Locations - Location of logs emitted from AWS services; NOTE that ${bucket}/${prefix} 
+// defines the root of the AWS logs, i.e. this is the root directory the AWS logs are located
+//
+// Full Path `${bucket}/${prefix}/AWSLogs/${aws-account-id}/${service-name}/region/yyyy/mm/dd/`
 variable "src_lb_logs_prefix" {
   type        = string
   description = "The prefix (logical hierarchy) in the bucket. If you don't specify a prefix, assumes the logs are placed at the root level of the bucket."
@@ -17,9 +20,12 @@ variable "src_lb_logs_prefix" {
 
 }
 
+// Projected Partitioning Variables
+
+// organization_enabled_regions -> which regions are included in this table?
 variable "organization_enabled_regions" {
   type        = list(string)
-  description = "..."
+  description = "AWS regions to include in this table, these regions are included in projected partitioning"
   default = [
     "ap-northeast-1",
     "ap-northeast-2",
@@ -41,26 +47,43 @@ variable "organization_enabled_regions" {
   ]
 }
 
-// Athena Source...
+// organization_account_ids -> which accounts are included in this table?
+variable "organization_account_ids" {
+  type        = list(string)
+  description = "Account IDs to include in this table, these account IDs are included in projected partitioning"
+  default = []
+}
+
+// Athena Variables
+
+// Athena DB -  
 variable "src_athena_db_name" {
   type        = string
-  description = "Athena DB to place Table into..."
+  description = "Athena DB for all"
 }
 
-// Athena Source...
-variable "src_athena_table_name" {
-  type        = string
-  description = "Path of the Source ALB logs..."
-}
-
-// Athena Extras
+// Glue Catalog
 variable "src_athena_catalog_id" {
   type        = string
   description = "Path of the Source ALB logs..."
   default     = "default"
 }
 
-variable "organization_account_ids" {
-  type        = list(string)
-  description = "Associated account IDs -> Used for Projected Partitioning"
+// Service Logs Tables
+variable "src_athena_table_alb_name" {
+  type        = string
+  description = "Athena table name for ALB logs"
+  default     = "alb"
+}
+
+variable "src_athena_table_waf_name" {
+  type        = string
+  description = "Athena table name for WAF logs"
+  default     = "waf"
+}
+
+variable "src_athena_table_vpc_name" {
+  type        = string
+  description = "Athena table name for VPC Flow logs"
+  default     = "vpcflow"
 }

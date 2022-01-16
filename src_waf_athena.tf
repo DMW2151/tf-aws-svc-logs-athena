@@ -1,18 +1,19 @@
 
 // Application Load Balancer Table 
 //
+// ALBs emit logs to the following location: 
+// bucket[/prefix]/AWSLogs/aws-account-id/elasticloadbalancing/region/yyyy/mm/dd/aws-account-id_elasticloadbalancing_region_app.load-balancer-id_end-time_ip-address_random-string.log.gz
+//
 // AWS ALB Docs: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
 //
-
-
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/glue_catalog_table
-resource "aws_glue_catalog_table" "alb_logs_src" {
+resource "aws_glue_catalog_table" "waf_logs_src" {
 
   // General
-  name          = var.src_athena_table_alb_name
+  name          = var.src_athena_table_waf_name
   database_name = var.src_athena_db_name
   table_type    = "EXTERNAL_TABLE"
-  description   = "Application Load Balancer (ALB) logs From ${local.src_s3_path}"
+  description   = "Web Application Firewall (WAF) logs From ${local.src_s3_path}"
 
   // Table Properties
   parameters = {
@@ -34,7 +35,7 @@ resource "aws_glue_catalog_table" "alb_logs_src" {
 
     // Partition Projection - Accounts in Org
     "projection.account_id.type"   = "enum"
-    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [ data.aws_caller_identity.current.id ] )
+    "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [ data.aws_caller_identity.current.id ])
 
     // Storage Location
     "storage.location.template" = "${local.src_s3_path}AWSLogs/$${account_id}/elasticloadbalancing/$${region}/$${date}/"

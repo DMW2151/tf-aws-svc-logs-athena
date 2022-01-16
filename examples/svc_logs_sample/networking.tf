@@ -4,7 +4,6 @@
 //  - N x private subnets 
 //  - NAT + EIP + IGW s.t. private subnet instances can get downloads
 
-
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet
 resource "aws_subnet" "public" {
 
@@ -62,19 +61,19 @@ resource "aws_eip" "core" {
   // General
   vpc = true
 
-  // Tags
-  tags = {
-    Name   = "tf-svc-logs-${each.value.availability_zone}"
-    az     = each.value.availability_zone
-    subnet = "${each.value.id}"
-  }
-
   // To ensure proper ordering, it is recommended to add an explicit dependency
   // on the Internet Gateway for the VPC. Should be OK implicitly, but *could* 
   // cause a missing dep...
   depends_on = [
     aws_internet_gateway.core
   ]
+
+  // Tags
+  tags = {
+    Name   = "tf-svc-logs-${each.value.availability_zone}"
+    az     = each.value.availability_zone
+    subnet = "${each.value.id}"
+  }
 
 }
 
@@ -87,6 +86,12 @@ resource "aws_nat_gateway" "nat" {
   allocation_id = each.value.id
   subnet_id     = each.value.tags.subnet
 
+  // To ensure proper ordering, it is recommended to add an explicit dependency
+  // on the Internet Gateway for the VPC.
+  depends_on = [
+    aws_internet_gateway.core
+  ]
+
   // Tags
   tags = {
     Name   = "tf-svc-logs-${each.value.tags.az}"
@@ -94,11 +99,6 @@ resource "aws_nat_gateway" "nat" {
     az     = each.value.tags.az
   }
 
-  // To ensure proper ordering, it is recommended to add an explicit dependency
-  // on the Internet Gateway for the VPC.
-  depends_on = [
-    aws_internet_gateway.core
-  ]
 }
 
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table
@@ -107,7 +107,7 @@ resource "aws_route_table" "public" {
   // General
   vpc_id = aws_vpc.core.id
 
-  // Routes - IPV4 and IPV6 to the internet OK'd
+  // Routes - Internet Traffic <> Internet Gateway
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.core.id
@@ -133,12 +133,12 @@ resource "aws_route_table" "private" {
   // General
   vpc_id = aws_vpc.core.id
 
-  // TODO: Routes - All non-local traffic uses the NAT; else `local` - Check if `local`
-  // rule needs to be defined
+  // Routes - Internet Traffic <> NAT Gateway, No IPV6 Traffic Through the NAT
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = each.value.id
   }
+
 
   // Tags
   tags = {
@@ -148,7 +148,7 @@ resource "aws_route_table" "private" {
   }
 }
 
-// Associate *this* route table to *these* subnets - probably could use the default main route table....
+// NOTE: Probably could use the default main route table
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association
 resource "aws_route_table_association" "public" {
 
@@ -170,5 +170,3 @@ resource "aws_route_table_association" "private" {
   subnet_id      = each.value.tags.private_subnet
   route_table_id = each.value.id
 }
-
-
