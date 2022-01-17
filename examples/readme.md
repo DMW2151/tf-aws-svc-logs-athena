@@ -24,7 +24,8 @@ At a high-level, `echo` launches steps **(1)**-**(5)** of the architecture shown
 
 ![Arch](./imgs/arch.png)
 
-
 ### Echo Service - Known Issues
 
-- [Inconsistent Plan - Tags](https://github.com/hashicorp/terraform-provider-aws/issues/19583)
+- [Inconsistent Plan - Tags](https://github.com/hashicorp/terraform-provider-aws/issues/19583) &mdash; In some instances a `terraform apply` may yield
+
+- The `echo` test service is configured to use a local backend, It's highly recommended that you modify the `terraform` block in `./svc_logs_sample/main.tf` to persist your state files remotely.
