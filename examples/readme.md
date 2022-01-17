@@ -16,11 +16,11 @@ The contents of `alb-*/**` contain examples handling a few different scenarios y
 
 ## Echo Test Service
 
-The contents of the `echo` directory launch a basic multi-region service that's been used to test this module with WAF, VPC, and ALB logs. You're free to launch these resources into your own account. Because the `echo` test module configures WAF logs, it requires that you're already hosting a public [Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html) on AWS that you're comfortable with using for testing (e.g. `*.test.yourdomain.com`).
+The contents of the `echo-sample-svc` directory launch a basic multi-region service that's been used to test this module with WAF, VPC, and ALB logs. You're free to launch these resources into your own account. Because the `echo-sample-svc` module configures WAF logs, it requires that you're already hosting a public [Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html) on AWS that you're comfortable with using for testing (e.g. `*.test.yourdomain.com`).
 
 ***Be warned, this module launches live resources into multiple AWS regions. Be mindful to `terraform destroy` all resources once you're done to avoid any unexpected charges***.
 
-At a high-level, `echo` launches steps **(1)**-**(5)** of the architecture shown below into your AWS account. Using the main module will then create the Athena resources to allow you to query service logs (**6**).
+At a high-level, `echo-sample-svc` launches steps **(1)**-**(5)** of the architecture shown below into your AWS account. Using the main module will then create the Athena resources to allow you to query service logs (**6**).
 
 ![Arch](./imgs/arch.png)
 

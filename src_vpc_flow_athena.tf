@@ -12,10 +12,15 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
   parameters = {
     // General
     EXTERNAL                      = "TRUE"
-    "projection.enabled"          = tostring(var.enable_projected_partitions)
     "has_encrypted_data"          = "false"
+    "projection.enabled"          = tostring(var.enable_projected_partitions)
     "partition_filtering.enabled" = tostring(var.enable_partition_filtering)
 
+    // Partition Projection - Date
+    "projection.date.type"   = "date"
+    "projection.date.range"  = "2022/01/01,NOW"
+    "projection.date.format" = "yyyy/MM/dd"
+    
     // Partition Projection - Region - All Active Regions
     "projection.region.type"   = "enum"
     "projection.region.values" = join(", ", var.organization_enabled_regions)
@@ -23,6 +28,16 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
     // Partition Projection - Accounts in Org
     "projection.account_id.type"   = "enum"
     "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [data.aws_caller_identity.current.id])
+
+    // Header Limits
+    "skip.header.line.count" = "1"
+
+    // Storage Location
+    "storage.location.template" = "${local.vpc_src_s3_path}AWSLogs/$${account_id}/vpcflowlogs/$${region}/$${date}/"
+
+    "serialization.format" = "row"
+    "field.delim" = " "
+    
   }
 
   // Partition Indexes
@@ -40,9 +55,14 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
 
   storage_descriptor {
 
-    location      = local.vpc_src_s3_path // TODO: CHECK
+    location      = "${local.vpc_src_s3_path}AWSLogs/634352306225/" // TODO: CHECK
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+
+    ser_de_info {
+      name = "vpc-default-serde"
+      serialization_library = "org.apache.hadoop.hive.serde2.RegexSerDe"
+    }
 
     // VPC - Table Schema 
     // Comments From: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
@@ -219,8 +239,6 @@ resource "aws_glue_catalog_table" "vpc_logs_src" {
       type    = "string"
       comment = "The path that egress traffic takes to the destination. To determine whether the traffic is egress traffic, check the flow-direction field. See AWS Reference"
     }
-
-
   }
 
 }

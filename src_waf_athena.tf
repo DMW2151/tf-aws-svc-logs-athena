@@ -38,7 +38,7 @@ resource "aws_glue_catalog_table" "waf_logs_src" {
     "projection.account_id.values" = join(", ", var.organization_account_ids != "" ? var.organization_account_ids : [data.aws_caller_identity.current.id])
 
     // Storage Location
-    "storage.location.template" = "${local.waf_src_s3_path}AWSLogs/$${account_id}/elasticloadbalancing/$${region}/$${date}/"
+    "storage.location.template" = "${local.waf_src_s3_path}AWSLogs/$${account_id}/webapplicationfirewall//$${region}/$${date}/"
 
   }
 

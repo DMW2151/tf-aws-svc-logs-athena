@@ -13,8 +13,6 @@ terraform {
 
 // Providers
 provider "aws" {
-  region = "us-east-1"
-
   default_tags {
     tags = {
       Environment = "Test"
@@ -30,7 +28,7 @@ data "aws_caller_identity" "current" {}
 // Create a Temporary Athena DB
 // Resource: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/athena_database
 resource "aws_athena_database" "logs" {
-  name   = "aws_svc_logs"
+  name   = var.aws_athena_database
   bucket = var.athena_query_results_bucket_name
 }
 
@@ -44,8 +42,9 @@ module "svc_logs" {
   // Source / Destination Location (ALB)
   svc_logs_bucket = var.svc_logs_bucket_name
 
-  // Optional S3 prefix for each supported service
-  alb_logs_prefix = "test-lb/"
+  
+  // Table Names for Each Service
+  alb_logs_tbl_name = var.alb_logs_tbl_name
 
   // Additional Options for Projected Partitioning / Partition Indexing
   enable_projected_partitions = true
