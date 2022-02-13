@@ -1,3 +1,8 @@
+
+**Note:** Thought I would use this for a presentation in 1/2022. Ended up not needing it. Assume it's WIP and not safe for use while this message is here.
+
+&mdash; DW
+
 # Querying AWS Service Logs
 
 This module takes service logs (e.g. ALB, WAF, VPC Flow) stored in S3 and provisions the corresponding Athena resources to make the logs query-able in Athena. This module will likely be most useful to you as a starting point for your own, more tailored implementation. The `src_${service}_athena.tf` files in this directory each translate the most recent log schema for an AWS service to an AWS Glue catalog table.
